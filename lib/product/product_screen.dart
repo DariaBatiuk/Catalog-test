@@ -1,7 +1,9 @@
+import 'package:catalog/cart/cart_provider.dart';
 import 'package:catalog/product/product.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class ProductScreen extends StatelessWidget {
+class ProductScreen extends ConsumerWidget {
   final Product product;
 
   const ProductScreen({
@@ -10,7 +12,7 @@ class ProductScreen extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -83,10 +85,10 @@ class ProductScreen extends StatelessWidget {
                 width: double.infinity,
                 child: FilledButton.icon(
                   onPressed: () {
+                    ref.read(cartProvider.notifier).add(product);
+
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Failed to add to cart.'),
-                      ),
+                      const SnackBar(content: Text('Added to cart')),
                     );
                   },
                   icon: const Icon(Icons.add_shopping_cart),

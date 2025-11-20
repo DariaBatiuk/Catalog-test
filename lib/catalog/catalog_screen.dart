@@ -155,10 +155,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                             '${product.category}, \$${product.price.toStringAsFixed(2)}',
                           ),
                           onTap: () {
-                            context.go(
-                              AppRoutes.productDetails,
-                              extra: product,
-                            );
+                            context.push('/product', extra: product);
                           },
                         );
                       },
