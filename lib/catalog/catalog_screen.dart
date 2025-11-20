@@ -1,16 +1,18 @@
 import 'package:catalog/app.components/app_bottom_navigation_bat.dart';
+import 'package:catalog/app_routes.dart';
 import 'package:catalog/catalog/catalog_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
-class Catalog extends ConsumerStatefulWidget {
-  const Catalog({super.key});
+class CatalogScreen extends ConsumerStatefulWidget {
+  const CatalogScreen({super.key});
 
   @override
-  ConsumerState<Catalog> createState() => _CatalogState();
+  ConsumerState<CatalogScreen> createState() => _CatalogScreenState();
 }
 
-class _CatalogState extends ConsumerState<Catalog> {
+class _CatalogScreenState extends ConsumerState<CatalogScreen> {
   final TextEditingController _searchController = TextEditingController();
 
   @override
@@ -62,6 +64,46 @@ class _CatalogState extends ConsumerState<Catalog> {
                 ),
               ),
             ),
+
+            if (state.categories.isNotEmpty)
+              SizedBox(
+                height: 40,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  children: [
+                    ChoiceChip(
+                      label: const Text('All'),
+                      selected: state.selectedCategory == null ||
+                          state.selectedCategory!.isEmpty,
+                      onSelected: (_) {
+                        ref
+                            .read(catalogProvider.notifier)
+                            .changeCategory(null);
+                      },
+                    ),
+                    const SizedBox(width: 8),
+                    ...state.categories.map((cat) {
+                      final isSelected = state.selectedCategory == cat;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: ChoiceChip(
+                          label: Text(cat),
+                          selected: isSelected,
+                          onSelected: (_) {
+                            ref
+                                .read(catalogProvider.notifier)
+                                .changeCategory(cat);
+                          },
+                        ),
+                      );
+                    }),
+                  ],
+                ),
+              ),
+
+            const SizedBox(height: 8),
+
             Expanded(
               child: RefreshIndicator(
                 onRefresh: () =>
@@ -85,7 +127,7 @@ class _CatalogState extends ConsumerState<Catalog> {
 
                     if (products.isEmpty) {
                       return const Center(
-                        child: Text('Failed to load products.'),
+                        child: Text('No products found.'),
                       );
                     }
 
@@ -113,7 +155,10 @@ class _CatalogState extends ConsumerState<Catalog> {
                             '${product.category}, \$${product.price.toStringAsFixed(2)}',
                           ),
                           onTap: () {
-                        
+                            context.go(
+                              AppRoutes.productDetails,
+                              extra: product,
+                            );
                           },
                         );
                       },
