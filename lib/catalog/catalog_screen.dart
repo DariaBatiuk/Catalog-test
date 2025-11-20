@@ -64,7 +64,6 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                 ),
               ),
             ),
-
             if (state.categories.isNotEmpty)
               SizedBox(
                 height: 40,
@@ -102,6 +101,42 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                 ),
               ),
 
+            const SizedBox(height: 4),
+
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  DropdownButton<PriceSort>(
+                    value: state.sort,
+                    underline: const SizedBox(),
+                    items: const [
+                      DropdownMenuItem(
+                        value: PriceSort.none,
+                        child: Text('Default'),
+                      ),
+                      DropdownMenuItem(
+                        value: PriceSort.lowToHigh,
+                        child: Text('Price ↑'),
+                      ),
+                      DropdownMenuItem(
+                        value: PriceSort.highToLow,
+                        child: Text('Price ↓'),
+                      ),
+                    ],
+                    onChanged: (val) {
+                      if (val != null) {
+                        ref
+                            .read(catalogProvider.notifier)
+                            .changeSort(val);
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+
             const SizedBox(height: 8),
 
             Expanded(
@@ -115,7 +150,6 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                         child: CircularProgressIndicator(),
                       );
                     }
-
                     if (state.error != null && state.products.isEmpty) {
                       return Center(
                         child: Text(
@@ -124,13 +158,11 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                         ),
                       );
                     }
-
                     if (products.isEmpty) {
                       return const Center(
                         child: Text('No products found.'),
                       );
                     }
-
                     return ListView.builder(
                       itemCount: products.length,
                       itemBuilder: (context, index) {
@@ -155,7 +187,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                             '${product.category}, \$${product.price.toStringAsFixed(2)}',
                           ),
                           onTap: () {
-                            context.push('/product', extra: product);
+                            context.push(AppRoutes.product, extra: product);
                           },
                         );
                       },

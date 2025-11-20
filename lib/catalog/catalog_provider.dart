@@ -1,25 +1,33 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
 import 'package:catalog/catalog/catalog_service.dart';
 import 'package:catalog/product/product.dart';
+import 'package:flutter_riverpod/legacy.dart';
+
+enum PriceSort {
+  none,
+  lowToHigh,
+  highToLow,
+}
 
 class CatalogState {
   final bool isLoading;
   final String? error;
   final List<Product> products;
   final String searchQuery;
-  final List<String> categories;
   final String? selectedCategory;
+  final List<String> categories;
+  final PriceSort sort;
 
   const CatalogState({
     this.isLoading = false,
     this.error,
     this.products = const [],
     this.searchQuery = '',
-    this.categories = const [],
     this.selectedCategory,
+    this.categories = const [],
+    this.sort = PriceSort.none,
   });
 
   CatalogState copyWith({
@@ -27,32 +35,40 @@ class CatalogState {
     String? error,
     List<Product>? products,
     String? searchQuery,
-    List<String>? categories,
     String? selectedCategory,
+    List<String>? categories,
+    PriceSort? sort,
   }) {
     return CatalogState(
       isLoading: isLoading ?? this.isLoading,
       error: error ?? this.error,
       products: products ?? this.products,
       searchQuery: searchQuery ?? this.searchQuery,
-      categories: categories ?? this.categories,
       selectedCategory: selectedCategory ?? this.selectedCategory,
+      categories: categories ?? this.categories,
+      sort: sort ?? this.sort,
     );
   }
 
   List<Product> get filteredProducts {
-    Iterable<Product> result = products;
+    List<Product> list = products;
 
     if (selectedCategory != null && selectedCategory!.isNotEmpty) {
-      result = result.where((p) => p.category == selectedCategory);
+      list = list.where((p) => p.category == selectedCategory).toList();
     }
-
     if (searchQuery.isNotEmpty) {
       final q = searchQuery.toLowerCase();
-      result = result.where((p) => p.title.toLowerCase().contains(q));
+      list = list
+          .where((p) => p.title.toLowerCase().contains(q))
+          .toList();
+    }
+    if (sort == PriceSort.lowToHigh) {
+      list.sort((a, b) => a.price.compareTo(b.price));
+    } else if (sort == PriceSort.highToLow) {
+      list.sort((a, b) => b.price.compareTo(a.price));
     }
 
-    return result.toList();
+    return list;
   }
 }
 
@@ -91,9 +107,11 @@ class CatalogNotifier extends StateNotifier<CatalogState> {
       state = state.copyWith(searchQuery: query);
     });
   }
-
   void changeCategory(String? category) {
     state = state.copyWith(selectedCategory: category);
+  }
+  void changeSort(PriceSort newSort) {
+    state = state.copyWith(sort: newSort);
   }
 
   @override
@@ -106,6 +124,7 @@ class CatalogNotifier extends StateNotifier<CatalogState> {
 final catalogServiceProvider = Provider<CatalogService>((ref) {
   return CatalogService();
 });
+
 final catalogProvider =
     StateNotifierProvider<CatalogNotifier, CatalogState>((ref) {
   final service = ref.watch(catalogServiceProvider);
