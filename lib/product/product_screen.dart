@@ -3,16 +3,55 @@ import 'package:catalog/product/product.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class ProductScreen extends ConsumerWidget {
+class ProductScreen extends ConsumerStatefulWidget {
   final Product product;
 
-  const ProductScreen({
-    super.key,
-    required this.product,
-  });
+  const ProductScreen({super.key, required this.product});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProductScreen> createState() => _ProductScreenState();
+}
+
+class _ProductScreenState extends ConsumerState<ProductScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 250),
+    );
+
+    _scale = Tween<double>(
+      begin: 1.0,
+      end: 1.15,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _addToCart() async {
+    await _controller.forward();
+    await _controller.reverse();
+
+    ref.read(cartProvider.notifier).add(widget.product);
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Added to the cart.')));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final product = widget.product;
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -37,8 +76,9 @@ class ProductScreen extends ConsumerWidget {
                     child: Image.network(
                       product.image,
                       fit: BoxFit.contain,
-                      errorBuilder: (_, __, ___) =>
-                          const Center(child: Icon(Icons.image_not_supported, size: 48)),
+                      errorBuilder: (_, __, ___) => const Center(
+                        child: Icon(Icons.image_not_supported, size: 48),
+                      ),
                     ),
                   ),
                 ),
@@ -46,9 +86,7 @@ class ProductScreen extends ConsumerWidget {
               const SizedBox(height: 16),
               Align(
                 alignment: Alignment.centerLeft,
-                child: Chip(
-                  label: Text(product.category),
-                ),
+                child: Chip(label: Text(product.category)),
               ),
               const SizedBox(height: 8),
               Text(
@@ -83,16 +121,13 @@ class ProductScreen extends ConsumerWidget {
 
               SizedBox(
                 width: double.infinity,
-                child: FilledButton.icon(
-                  onPressed: () {
-                    ref.read(cartProvider.notifier).add(product);
-
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Added to cart')),
-                    );
-                  },
-                  icon: const Icon(Icons.add_shopping_cart),
-                  label: const Text('Add to cart'),
+                child: ScaleTransition(
+                  scale: _scale,
+                  child: FilledButton.icon(
+                    onPressed: _addToCart,
+                    icon: const Icon(Icons.add_shopping_cart),
+                    label: const Text('Add to cart'),
+                  ),
                 ),
               ),
             ],
